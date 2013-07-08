@@ -19,15 +19,15 @@ csvToList delim s = map (split delim) (lines s)
 
 -- apply f to elements in matrix
 mmap :: (a -> b) -> [[a]] -> [[b]]
-mmap f x = map (map f) x
+mmap f = map (map f)
 
 -- rowLength ["sample", "as", ""] returns [6, 2, 0], nuff said
 rowLength :: Row -> [Int]
-rowLength x = map length x
+rowLength = map length
 
 -- Finds maximum length in each row
 maxRowLength :: Matrix -> [Int]
-maxRowLength x = map maximum $ map (rowLength) x
+maxRowLength = map (maximum . rowLength)
 
 columnLength = rowLength.transpose
 maxColumnLength = maxRowLength.transpose
@@ -35,7 +35,7 @@ maxColumnLength = maxRowLength.transpose
 -- extends string s for n characters (with whitespace)
 extendStringFor :: Int -> String -> String
 extendStringFor 0 s = s
-extendStringFor n s = (extendStringFor (n-1) s) ++ " "
+extendStringFor n s = extendStringFor (n-1) s ++ " "
 
 -- extends string s up to n characters (with whitespace)
 extendStringTo :: Int -> String -> String
@@ -43,7 +43,7 @@ extendStringTo n s = extendStringFor (n - length s) s
 
 -- Resizes each row
 resizeRow :: [Int] -> Row -> Row
-resizeRow n s = zipWith (\x y -> extendStringTo x y) n s
+resizeRow = zipWith extendStringTo
 
 -- Makes all fiels in table same width
 sameSizeTable :: Matrix -> Matrix
@@ -53,12 +53,11 @@ sameSizeTable x = map (resizeRow (maxColumnLength x)) x
 makeTable :: String -> Matrix -> String
 makeTable _ [] = ""
 makeTable splitter [x] = foldr (\x y -> x ++ splitter ++ y) "" x
-makeTable splitter (x:xs) = (makeTable splitter [x]) ++ "\n" ++ (makeTable splitter xs)
+makeTable splitter (x:xs) = makeTable splitter [x] ++ "\n" ++ makeTable splitter xs
 
 main = do
   (inFile:output) <- getArgs
   let outFile = head output
   file <- readFile inFile
   let list = csvToList ',' file
-  writeFile outFile $ (makeTable " | " (sameSizeTable (tail list)))
-  
+  writeFile outFile $ makeTable " " (sameSizeTable (tail list))
